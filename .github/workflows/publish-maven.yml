@@ -1,0 +1,39 @@
+name: Deploy to Local Nexus
+
+on:
+  push:
+    branches: [main]
+    # Optionally: trigger only on version tag
+    # tags: ['v*.*.*']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'  # or '11' if you're using that
+
+      - name: Configure settings.xml for Nexus
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings>
+            <servers>
+              <server>
+                <id>nexus</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Deploy to Nexus
+        run: mvn clean deploy -DskipTests
